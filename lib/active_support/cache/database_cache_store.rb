@@ -10,12 +10,17 @@ module ActiveSupport
 
       prepend Strategy::LocalCache
 
-      attr_reader :reading_role, :writing_role, :max_key_bytesize
+      attr_reader :reading_role, :writing_role, :max_key_bytesize, :entry_marker, :entry_marker_options
 
       def initialize(options)
         @writing_role = options[:writing_role] || options[:role]
         @reading_role = options[:reading_role] || options[:role]
         @max_key_bytesize = MAX_KEY_BYTESIZE
+        @entry_marker = DatabaseCache::EntryMarker.lookup(
+          options.fetch(:entry_marker, :async),
+          **({writing_role: writing_role}),
+          **options.fetch(:entry_marker_options, {})
+        )
         super(options)
       end
 
@@ -59,7 +64,9 @@ module ActiveSupport
         end
 
         def read_serialized_entry(key, raw: false, **options)
-          with_reading_role { DatabaseCache::Entry.get(key) }
+          with_reading_role {
+            DatabaseCache::Entry.get(key, marker: entry_marker)
+          }
         end
 
         def write_entry(key, entry, raw: false, **options)
