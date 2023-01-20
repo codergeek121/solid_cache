@@ -5,6 +5,7 @@ module SolidCache
   class Engine < ::Rails::Engine
     isolate_namespace SolidCache
 
+    p [:ssc]
     config.solid_cache = ActiveSupport::OrderedOptions.new
 
     initializer "solid_cache" do |app|
