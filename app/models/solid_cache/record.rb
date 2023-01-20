@@ -2,6 +2,7 @@ module SolidCache
   class Record < ActiveRecord::Base
     self.abstract_class = true
 
+    puts caller
     p [:scr, SolidCache.connects_to]
     connects_to **SolidCache.connects_to if SolidCache.connects_to
   end
