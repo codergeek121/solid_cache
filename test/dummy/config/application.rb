@@ -24,6 +24,8 @@ module Dummy
     # config.time_zone = "Central Time (US & Canada)"
     # config.eager_load_paths << Rails.root.join("extras")
 
+    p [:da]
+
     config.solid_cache.connects_to = {
       shards: {
         default: { writing: :primary, reading: :primary_replica },
