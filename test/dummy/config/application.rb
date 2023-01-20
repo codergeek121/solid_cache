@@ -24,7 +24,7 @@ module Dummy
     # config.time_zone = "Central Time (US & Canada)"
     # config.eager_load_paths << Rails.root.join("extras")
 
-    p [:da]
+    p [:da, config.solid_cache.object_id, config.object_id]
 
     config.solid_cache.connects_to = {
       shards: {

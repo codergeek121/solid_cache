@@ -5,15 +5,15 @@ module SolidCache
   class Engine < ::Rails::Engine
     isolate_namespace SolidCache
 
-    p [:ssc]
     config.solid_cache = ActiveSupport::OrderedOptions.new
+    p [:ssc, config.solid_cache.object_id, config.object_id]
 
     initializer "solid_cache" do |app|
       config.solid_cache.executor ||= app.executor
 
       config.after_initialize do
         SolidCache.executor = config.solid_cache.executor
-        p [:seai, config.solid_cache.connects_to]
+        p [:seai, config.solid_cache.connects_to, config.solid_cache.object_id, config.object_id]
         SolidCache.connects_to = config.solid_cache.connects_to
       end
     end
