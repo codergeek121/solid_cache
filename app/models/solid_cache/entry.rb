@@ -10,11 +10,16 @@ module SolidCache
       end
 
       def get(key)
-        where(key: key).skip_query_cache!.pick(:value)
+        SolidCache::Entry.uncached do
+          Entry.find_by_sql([get_sql, ActiveModel::Type::Binary.new.serialize(key)]).pick(:value)
+        end
       end
 
       def get_all(keys)
-        where(key: keys).skip_query_cache!.pluck(:key, :value).to_h
+        serialized_keys = keys.map { |key| ActiveModel::Type::Binary.new.serialize(key) }
+        SolidCache::Entry.uncached do
+          Entry.find_by_sql([get_all_sql, serialized_keys]).pluck(:key, :value).to_h
+        end
       end
 
       def delete_by_key(key)
@@ -47,6 +52,14 @@ module SolidCache
       private
         def upsert_unique_by
           connection.supports_insert_conflict_target? ? :key : nil
+        end
+
+        def get_sql
+          @get_sql ||= "select `#{table_name}`.`value` from `#{table_name}` where `#{table_name}`.`key` = ?"
+        end
+
+        def get_all_sql
+          @get_all_sql ||= "select `#{table_name}`.`key`, `#{table_name}`.`value` from `#{table_name}` where `#{table_name}`.`key` in (?)"
         end
     end
   end
