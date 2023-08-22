@@ -1,6 +1,8 @@
 module SolidCache
   class Entry < Record
     class << self
+      NULL_INSTRUMENTER = ActiveSupport::Notifications::Instrumenter.new(ActiveSupport::Notifications::Fanout.new)
+
       def set(key, value)
         upsert_all([{key: key, value: value}], unique_by: upsert_unique_by, update_only: [:value])
       end
@@ -11,14 +13,18 @@ module SolidCache
 
       def get(key)
         SolidCache::Entry.uncached do
-          Entry.find_by_sql([get_sql, ActiveModel::Type::Binary.new.serialize(key)]).pick(:value)
+          SolidCache::Record.connection.with_instrumenter(NULL_INSTRUMENTER) do
+            Entry.find_by_sql([get_sql, ActiveModel::Type::Binary.new.serialize(key)]).pick(:value)
+          end
         end
       end
 
       def get_all(keys)
         serialized_keys = keys.map { |key| ActiveModel::Type::Binary.new.serialize(key) }
         SolidCache::Entry.uncached do
-          Entry.find_by_sql([get_all_sql, serialized_keys]).pluck(:key, :value).to_h
+          SolidCache::Record.connection.with_instrumenter(NULL_INSTRUMENTER) do
+            Entry.find_by_sql([get_all_sql, serialized_keys]).pluck(:key, :value).to_h
+          end
         end
       end
 
