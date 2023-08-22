@@ -55,11 +55,20 @@ module SolidCache
         end
 
         def get_sql
-          @get_sql ||= "select `#{table_name}`.`value` from `#{table_name}` where `#{table_name}`.`key` = ?"
+          @get_sql ||= build_sql_with_binds(SolidCache::Entry.where(key: "placeholder").select(:value))
         end
 
         def get_all_sql
-          @get_all_sql ||= "select `#{table_name}`.`key`, `#{table_name}`.`value` from `#{table_name}` where `#{table_name}`.`key` in (?)"
+          @get_all_sql ||= build_sql_with_binds(SolidCache::Entry.where(key: ["placeholder1", "placeholder2"]).select(:key, :value)).gsub("?, ?", "?")
+        end
+
+        def build_sql_with_binds(relation)
+          collector = Arel::Collectors::Composite.new(
+            Arel::Collectors::SQLString.new,
+            Arel::Collectors::Bind.new,
+          )
+
+          SolidCache::Entry.connection.visitor.compile(relation.arel.ast, collector)[0]
         end
     end
   end
